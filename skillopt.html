@@ -186,6 +186,7 @@
       display: inline-flex;
       align-items: center;
       justify-content: center;
+      gap: 8px;
       min-height: 42px;
       padding: 10px 15px;
       font-family: var(--mono);
@@ -217,6 +218,27 @@
       color: #111820;
       background: var(--gold);
       border-color: var(--gold);
+    }
+
+    .button-icon {
+      width: 16px;
+      height: 16px;
+      flex: 0 0 auto;
+      fill: currentColor;
+    }
+
+    .button-icon-mark {
+      display: inline-grid;
+      place-items: center;
+      min-width: 30px;
+      height: 16px;
+      padding: 0 3px;
+      border: 1px solid currentColor;
+      border-radius: 3px;
+      font-size: 0.52rem;
+      font-weight: 800;
+      line-height: 1;
+      text-transform: none;
     }
 
     .hero-ledger {
@@ -1184,14 +1206,6 @@
       font-size: 0.92rem;
     }
 
-    .resource-panel {
-      display: grid;
-      grid-template-columns: minmax(0, 0.75fr) minmax(280px, 0.55fr);
-      gap: 18px;
-      align-items: stretch;
-    }
-
-    .resource-card,
     .citation-panel {
       padding: 22px;
       background: rgba(255, 255, 255, 0.72);
@@ -1199,7 +1213,6 @@
       border-radius: 8px;
     }
 
-    .resource-card h3,
     .citation-panel h3 {
       margin: 0 0 10px;
       font-family: var(--display);
@@ -1207,39 +1220,10 @@
       line-height: 1.05;
     }
 
-    .resource-card p,
     .citation-panel p {
       margin: 0;
       color: var(--muted);
       line-height: 1.55;
-    }
-
-    .resource-links {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-      margin-top: 18px;
-    }
-
-    .resource-link {
-      display: inline-flex;
-      align-items: center;
-      min-height: 38px;
-      padding: 8px 12px;
-      color: var(--ink);
-      background: var(--paper);
-      border: 1px solid var(--line-strong);
-      border-radius: 6px;
-      font-family: var(--mono);
-      font-size: 0.76rem;
-      font-weight: 700;
-      text-decoration: none;
-    }
-
-    .resource-link.primary {
-      color: #f8faf7;
-      background: var(--black);
-      border-color: var(--black);
     }
 
     .citation-box {
@@ -1299,7 +1283,6 @@
       .manifesto,
       .teaser-heading,
       .section-header,
-      .resource-panel,
       .evolution-shell {
         grid-template-columns: 1fr;
       }
@@ -1421,7 +1404,6 @@
       <a href="#ablations">Ablations</a>
       <a href="#evolution">Evolution</a>
       <a href="#transfer">Transfer</a>
-      <a href="#paper">Paper</a>
       <a href="#citation">Citation</a>
       <a href="https://github.com/microsoft/SkillOpt" target="_blank" rel="noopener">Code</a>
     </nav>
@@ -1442,8 +1424,22 @@
           <a class="button primary" href="#idea">Core Idea</a>
           <a class="button secondary" href="#method">Method</a>
           <a class="button secondary" href="#results">View Results</a>
-          <a class="button tertiary" href="https://github.com/microsoft/SkillOpt" target="_blank" rel="noopener">Code Repo</a>
-          <a class="button secondary" href="#paper">Paper</a>
+          <a class="button tertiary" href="https://github.com/microsoft/SkillOpt" target="_blank" rel="noopener">
+            <svg class="button-icon" viewBox="0 0 16 16" aria-hidden="true">
+              <path d="M8 0C3.58 0 0 3.67 0 8.2c0 3.62 2.29 6.69 5.47 7.78.4.08.55-.18.55-.4 0-.2-.01-.86-.01-1.56-2.01.38-2.53-.5-2.69-.95-.09-.23-.48-.95-.82-1.14-.28-.15-.68-.52-.01-.53.63-.01 1.08.59 1.23.83.72 1.24 1.87.89 2.33.68.07-.53.28-.89.51-1.09-1.78-.21-3.64-.91-3.64-4.03 0-.89.31-1.62.82-2.19-.08-.21-.36-1.04.08-2.16 0 0 .67-.22 2.2.84A7.42 7.42 0 0 1 8 4.01c.68 0 1.36.09 2 .27 1.53-1.06 2.2-.84 2.2-.84.44 1.12.16 1.95.08 2.16.51.57.82 1.3.82 2.19 0 3.13-1.87 3.82-3.65 4.03.29.26.54.75.54 1.51 0 1.09-.01 1.97-.01 2.24 0 .22.15.48.55.4A8.1 8.1 0 0 0 16 8.2C16 3.67 12.42 0 8 0Z"/>
+            </svg>
+            Code Repo
+          </a>
+          <a class="button secondary" href="#citation" aria-label="Paper placeholder">
+            <span class="button-icon-mark" aria-hidden="true">arXiv</span>
+            Paper
+          </a>
+          <a class="button secondary" href="https://youtu.be/JUBMDTCiM0M" target="_blank" rel="noopener">
+            <svg class="button-icon" viewBox="0 0 16 16" aria-hidden="true">
+              <path d="M14.7 4.1a1.9 1.9 0 0 0-1.34-1.34C12.18 2.44 8 2.44 8 2.44s-4.18 0-5.36.32A1.9 1.9 0 0 0 1.3 4.1 19.8 19.8 0 0 0 .99 7.75c0 1.28.11 2.55.31 3.65a1.9 1.9 0 0 0 1.34 1.34c1.18.32 5.36.32 5.36.32s4.18 0 5.36-.32a1.9 1.9 0 0 0 1.34-1.34c.2-1.1.31-2.37.31-3.65 0-1.28-.11-2.55-.31-3.65ZM6.6 10.04V5.46l3.9 2.29-3.9 2.29Z"/>
+            </svg>
+            Video
+          </a>
         </div>
       </div>
 
@@ -2025,49 +2021,33 @@
       </div>
     </section>
 
-    <section class="section" id="paper">
+    <section class="section" id="citation">
       <div class="section-header">
-        <div class="section-eyebrow">07 / Links</div>
+        <div class="section-eyebrow">07 / Citation</div>
         <div>
-          <h2>Paper, code, and citation.</h2>
+          <h2>Citation.</h2>
           <p class="section-lede">
-            The code repository is public. The paper link is reserved here and will
-            be replaced with the final preprint URL.
+            The final paper link and BibTeX will be updated when the preprint is available.
           </p>
         </div>
       </div>
 
-      <div class="resource-panel">
-        <article class="resource-card">
-          <h3>Project resources</h3>
-          <p>
-            Use the repository for code and this page section as the temporary paper target
-            until the final paper URL is available.
-          </p>
-          <div class="resource-links" aria-label="Project resource links">
-            <a class="resource-link primary" href="https://github.com/microsoft/SkillOpt" target="_blank" rel="noopener">Code repository</a>
-            <a class="resource-link" href="#paper">Paper placeholder</a>
-            <a class="resource-link" href="https://youtu.be/JUBMDTCiM0M" target="_blank" rel="noopener">Project video</a>
-          </div>
-        </article>
-
-        <article class="citation-panel" id="citation">
-          <h3>Citation</h3>
-          <p>Use this placeholder BibTeX until the camera-ready citation is available.</p>
-          <pre class="citation-box"><code>@misc{skillopt2026,
+      <article class="citation-panel">
+        <h3>BibTeX placeholder</h3>
+        <p>Use this placeholder until the camera-ready citation is available.</p>
+        <pre class="citation-box"><code>@misc{skillopt2026,
   title = {SkillOpt: Executive Strategy for Self-Evolving Agent Skills},
   author = {SkillOpt Authors},
   year = {2026},
   note = {Preprint forthcoming},
   url = {https://microsoft.github.io/SkillOpt/}
 }</code></pre>
-        </article>
-      </div>
+      </article>
     </section>
 
     <footer class="footer">
       <span>SkillOpt: Executive Strategy for Self-Evolving Agent Skills</span>
-      <span><a href="https://github.com/microsoft/SkillOpt" target="_blank" rel="noopener">Code</a> / <a href="#paper">Paper</a> / <a href="#citation">Citation</a></span>
+      <span><a href="https://github.com/microsoft/SkillOpt" target="_blank" rel="noopener">Code</a> / <a href="#citation">Citation</a></span>
     </footer>
   </main>
   <script>

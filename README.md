@@ -5,7 +5,9 @@
 
 *Train agent skills like you train neural networks — with epochs, learning rates, and validation gates — but without touching model weights.*
 
-[Project page](https://microsoft.github.io/SkillOpt/) · [Paper](https://microsoft.github.io/SkillOpt/#paper) · [Project video](https://youtu.be/JUBMDTCiM0M)
+[![Project Page](https://img.shields.io/badge/Project%20Page-SkillOpt-8dbb3c?style=for-the-badge&labelColor=4c4c4c)](https://microsoft.github.io/SkillOpt/)
+[![Paper](https://img.shields.io/badge/Paper-Coming%20Soon-b31b1b?style=for-the-badge&labelColor=4c4c4c)](https://microsoft.github.io/SkillOpt/#citation)
+[![Project Video](https://img.shields.io/badge/Project%20Video-YouTube-ff0000?style=for-the-badge&labelColor=4c4c4c)](https://youtu.be/JUBMDTCiM0M)
 
 [![SkillOpt project video](https://img.youtube.com/vi/JUBMDTCiM0M/maxresdefault.jpg)](https://youtu.be/JUBMDTCiM0M)
 
@@ -417,4 +419,3 @@ For SWEBench, you also need a working Docker environment plus the SWE-bench harn
   year={2026}
 }
 ```
-
