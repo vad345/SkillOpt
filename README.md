@@ -221,12 +221,6 @@ python -m skillopt_webui.app --share
 
 ---
 
-## Star History
-
-[![Star History Chart](https://api.star-history.com/svg?repos=microsoft/SkillOpt&type=Date)](https://star-history.com/#microsoft/SkillOpt&Date)
-
----
-
 ## Citation
 
 ```bibtex
