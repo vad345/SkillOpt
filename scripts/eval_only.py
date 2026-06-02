@@ -303,17 +303,19 @@ def main() -> None:
         backend = normalize_backend_name(explicit_backend)
         cfg["model_backend"] = backend
         if backend in {"claude", "claude_chat"}:
-            cfg.setdefault("optimizer_backend", "claude_chat")
-            cfg.setdefault("target_backend", "claude_chat")
+            opt_backend, tgt_backend = "claude_chat", "claude_chat"
         elif backend in {"codex", "codex_exec"}:
-            cfg.setdefault("optimizer_backend", "openai_chat")
-            cfg.setdefault("target_backend", "codex_exec")
+            opt_backend, tgt_backend = "openai_chat", "codex_exec"
         elif backend == "claude_code_exec":
-            cfg.setdefault("optimizer_backend", "openai_chat")
-            cfg.setdefault("target_backend", "claude_code_exec")
+            opt_backend, tgt_backend = "openai_chat", "claude_code_exec"
         else:
-            cfg.setdefault("optimizer_backend", "openai_chat")
-            cfg.setdefault("target_backend", "openai_chat")
+            opt_backend, tgt_backend = "openai_chat", "openai_chat"
+        # An explicit --backend overrides the config defaults, but an explicit
+        # per-role --optimizer_backend / --target_backend still takes priority.
+        if not _has_model_override("model.optimizer_backend", "optimizer_backend"):
+            cfg["optimizer_backend"] = opt_backend
+        if not _has_model_override("model.target_backend", "target_backend"):
+            cfg["target_backend"] = tgt_backend
     else:
         cfg.setdefault("optimizer_backend", "openai_chat")
         cfg.setdefault("target_backend", "openai_chat")

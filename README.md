@@ -49,26 +49,74 @@ https://github.com/user-attachments/assets/eb12d3bc-371c-467f-904d-91b61f339ed7
 ### Requirements
 
 - Python 3.10+
+- [uv](https://github.com/astral-sh/uv)
 
 ```bash
 git clone https://github.com/microsoft/SkillOpt.git
 cd SkillOpt
-pip install -e .
+
+uv venv --python 3.12
+source .venv/bin/activate
+uv pip install -e .
 
 # For the ALFWorld benchmark (optional):
-pip install -e ".[alfworld]"
+uv pip install -e ".[alfworld]"
 alfworld-download
 ```
 
 ### Configure API Credentials
 
+`.env.example` ships preconfigured for **Claude via the Claude CLI**
+(`OPTIMIZER_BACKEND` / `TARGET_BACKEND` = `claude_chat`, model
+`claude-sonnet-4-6`). For that path you don't need to edit anything — just copy
+and source it, then log in to the CLI (see below):
+
 ```bash
 cp .env.example .env
-# Edit .env with your API credentials, then:
 source .env
 ```
 
-#### Azure OpenAI *(recommended)*
+To use a different backend (Azure OpenAI, Qwen, MiniMax), edit `.env`: set
+`OPTIMIZER_BACKEND` / `TARGET_BACKEND` and that backend's credentials — see the
+sections below. You can also override the backend per run with `--backend` on
+any script.
+
+#### Anthropic Claude *(via Claude CLI — no API key needed)*
+
+The `claude_chat` backend doesn't call the Anthropic API directly — it shells
+out to the [`claude` CLI](https://docs.claude.com/claude-code) (`claude -p`).
+Authentication therefore piggybacks on the CLI's own login, so there is **no
+API key to manage** and nothing secret in `.env`. The backend itself is already
+selected by `.env.example` (see [Configure API Credentials](#configure-api-credentials)
+above) — all that's left is the CLI login.
+
+**Step 1 — Install the CLI and log in once** (skip if you already have it):
+
+```bash
+claude auth login          # or run `claude` and use /login
+claude --version           # sanity check: should print a version
+```
+
+**Step 2 — Verify the wiring** with a one-line smoke test:
+
+```bash
+OPTIMIZER_BACKEND=claude_chat TARGET_BACKEND=claude_chat python -c "
+from skillopt.model import set_target_backend, chat_target
+set_target_backend('claude_chat')
+text, usage = chat_target('You are a calculator. Reply with only the number.', 'What is 21 + 21?')
+print('reply =', text.strip(), '| usage =', usage)
+"
+# Expected: reply = 42 | usage = {...}
+```
+
+If you see `reply = 42`, the CLI, login, and backend are all wired correctly.
+
+> **Note:** Do **not** set `ANTHROPIC_API_KEY` when relying on the CLI
+> subscription login — if it is present in the environment, the CLI bills
+> against the API key instead of your login. Set it only if you specifically
+> want API-key billing.
+
+#### Azure OpenAI
 
 ```bash
 export AZURE_OPENAI_ENDPOINT="https://your-resource.openai.azure.com/"
@@ -91,12 +139,6 @@ export AZURE_OPENAI_AUTH_MODE="openai_compatible"
 This routes all calls through the plain OpenAI Python client (no Azure auth, no `api-version` header).
 
 > **Note:** SkillOpt reuses the `AZURE_OPENAI_*` env var names even in this mode — there is no separate `OPENAI_API_KEY` knob.
-
-#### Anthropic Claude
-
-```bash
-export ANTHROPIC_API_KEY="sk-ant-..."
-```
 
 #### Qwen *(local vLLM)*
 
@@ -134,30 +176,66 @@ export MINIMAX_MODEL="MiniMax-M2.7"
 
 ### Training
 
+> **What is SearchQA?** A context-grounded question-answering benchmark used as
+> the running example below. The agent receives the skill document, a question,
+> and context passages, then must return its answer inside `<answer>...</answer>`
+> tags (single turn). SkillOpt doesn't fine-tune the model — it iteratively
+> rewrites the *skill* so the agent answers more accurately. See
+> [Supported Benchmarks](#supported-benchmarks) for the full list.
+
+> ⚠️ **Materialize the data first.** The repo ships only *split manifests*
+> (`data/*_id_split/` — lists of example **IDs**, no questions/contexts/answers).
+> Pointing `--split_dir` at a `*_id_split/` manifest will run but score 0.0
+> everywhere, since the examples have no content. Materialize the runnable split
+> into the `split_dir` each config expects first:
+>
+> ```bash
+> uv pip install -e ".[data]"                 # one-time: pulls in datasets + huggingface_hub
+> python scripts/materialize_searchqa.py      # → data/searchqa_split/
+> python scripts/materialize_livemath.py      # → data/livemathematicianbench_split/
+> ```
+
+| Benchmark | Materialize with | Notes |
+|---|---|---|
+| SearchQA | `python scripts/materialize_searchqa.py` | text join on `lucadiliello/searchqa` |
+| LiveMathematicianBench | `python scripts/materialize_livemath.py` | downloads monthly QA files, joins by `<month>:<no>` |
+| DocVQA | manual — see [`data/README.md`](data/README.md) | needs page **images** from `lmms-lab/DocVQA` |
+| OfficeQA | manual — see [`data/README.md`](data/README.md) | needs supporting **documents** |
+| SpreadsheetBench | manual — see [`data/README.md`](data/README.md) | needs **spreadsheet** files |
+| ALFWorld | `alfworld-download` (sets `$ALFWORLD_DATA`) | manifest is usable directly as `--split_dir` |
+
+**Claude CLI way** — no endpoint, no API key, no `--*_model` flags (defaults to
+`claude-sonnet-4-6`). Just add `--backend claude`:
+
 ```bash
-# Minimal example — train on SearchQA:
+# Train on SearchQA with Claude (after materializing data/searchqa_split):
 python scripts/train.py \
     --config configs/searchqa/default.yaml \
-    --split_dir /path/to/your/searchqa_split \
+    --split_dir data/searchqa_split \
+    --backend claude
+
+# Other benchmarks (Claude) — each split_dir is also the config default, so it's optional:
+python scripts/train.py --config configs/livemathematicianbench/default.yaml --split_dir data/livemathematicianbench_split --backend claude
+python scripts/train.py --config configs/alfworld/default.yaml --split_dir data/alfworld_path_split --backend claude
+```
+
+Each `--split_dir` above is already the config default, so you can omit it. The
+same pattern works for any benchmark — swap the `--config`/`--split_dir` (after
+materializing that benchmark's data per the table above). Using Azure OpenAI
+instead, drop `--backend claude` and pass the endpoint + models:
+
+```bash
+# Train on SearchQA with Azure OpenAI:
+python scripts/train.py \
+    --config configs/searchqa/default.yaml \
+    --split_dir data/searchqa_split \
     --azure_openai_endpoint https://your-resource.openai.azure.com/ \
     --optimizer_model gpt-5.5 \
     --target_model gpt-5.5
 
-# Train on LiveMathematicianBench:
-python scripts/train.py \
-    --config configs/livemathematicianbench/default.yaml \
-    --split_dir /path/to/your/livemath_split \
-    --azure_openai_endpoint https://your-resource.openai.azure.com/ \
-    --optimizer_model gpt-5.5 \
-    --target_model gpt-5.5
-
-# Train on ALFWorld:
-python scripts/train.py \
-    --config configs/alfworld/default.yaml \
-    --split_dir data/alfworld_path_split \
-    --azure_openai_endpoint https://your-resource.openai.azure.com/ \
-    --optimizer_model gpt-5.5 \
-    --target_model gpt-5.5
+# Other benchmarks (Azure):
+python scripts/train.py --config configs/livemathematicianbench/default.yaml --split_dir data/livemathematicianbench_split --azure_openai_endpoint https://your-resource.openai.azure.com/ --optimizer_model gpt-5.5 --target_model gpt-5.5
+python scripts/train.py --config configs/alfworld/default.yaml --split_dir data/alfworld_path_split --azure_openai_endpoint https://your-resource.openai.azure.com/ --optimizer_model gpt-5.5 --target_model gpt-5.5
 ```
 
 Key CLI arguments:
@@ -166,9 +244,10 @@ Key CLI arguments:
 |---|---|---|
 | `--config` | Benchmark config YAML | `configs/searchqa/default.yaml` |
 | `--split_dir` | Path to data split directory | `/path/to/split` |
-| `--azure_openai_endpoint` | Azure OpenAI endpoint URL | `https://your-resource.openai.azure.com/` |
-| `--optimizer_model` | Optimizer model deployment name | `gpt-5.5` |
-| `--target_model` | Target model deployment name | `gpt-5.5` |
+| `--backend` | Backend shorthand (sets optimizer + target) | `claude` |
+| `--azure_openai_endpoint` | Azure OpenAI endpoint URL *(Azure backend only)* | `https://your-resource.openai.azure.com/` |
+| `--optimizer_model` | Optimizer model *(optional for Claude; defaults to `claude-sonnet-4-6`)* | `gpt-5.5` |
+| `--target_model` | Target model *(optional for Claude; defaults to `claude-sonnet-4-6`)* | `gpt-5.5` |
 | `--num_epochs` | Number of training epochs | `4` |
 | `--batch_size` | Batch size per step | `40` |
 | `--workers` | Parallel rollout workers | `8` |
@@ -176,25 +255,30 @@ Key CLI arguments:
 
 ### Eval Only
 
-Evaluate a trained skill on specific data splits without training:
+Evaluate a trained skill on specific data splits without training.
+
+**Claude CLI way** — just add `--backend claude` (no endpoint, no models):
 
 ```bash
-# Evaluate the packaged GPT-5.5 SearchQA skill on the test split:
+# Evaluate the packaged SearchQA skill on one split with Claude:
 python scripts/eval_only.py \
   --config configs/searchqa/default.yaml \
   --skill ckpt/searchqa/gpt5.5_skill.md \
   --split valid_unseen \
-  --split_dir /path/to/searchqa_split \
-  --azure_openai_endpoint https://your-resource.openai.azure.com/
+  --split_dir data/searchqa_split \
+  --backend claude
 
 # Evaluate on all splits (train + val + test):
 python scripts/eval_only.py \
   --config configs/searchqa/default.yaml \
   --skill ckpt/searchqa/gpt5.5_skill.md \
   --split all \
-  --split_dir /path/to/searchqa_split \
-  --azure_openai_endpoint https://your-resource.openai.azure.com/
+  --split_dir data/searchqa_split \
+  --backend claude
 ```
+
+Using Azure OpenAI instead, drop `--backend claude` and pass
+`--azure_openai_endpoint https://your-resource.openai.azure.com/`.
 
 To evaluate a skill produced by your own training run, replace `--skill` with that run's best-skill path, for example `outputs/my_run/best_skill.md`.
 
@@ -263,7 +347,7 @@ Each JSON file is an array of task items. The required fields depend on the benc
 
 See `skillopt/envs/<benchmark>/dataloader.py` for the exact format each benchmark expects.
 
-> **Note:** Most benchmark datasets are not included in this repository. Prepare your own data following the format above. The exact SearchQA split used in the paper is provided at [`data/searchqa_id_split/`](data/searchqa_id_split) (400 train / 200 val / 1400 test). We are preparing the remaining benchmark split manifests for upload.
+> **Note:** Most benchmark datasets are not included in this repository — the `data/*_id_split/` directories are **ID manifests only** (stable example IDs per split, no payload). To get a runnable split you materialize the full examples from the upstream source listed in [`data/README.md`](data/README.md) into the `split_dir` path each config expects (e.g. `data/searchqa_split/`). For SearchQA this is automated: `python scripts/materialize_searchqa.py` joins [`data/searchqa_id_split/`](data/searchqa_id_split) (400 / 200 / 1400) against [`lucadiliello/searchqa`](https://huggingface.co/datasets/lucadiliello/searchqa) and writes `data/searchqa_split/`. For other benchmarks, follow the lookup keys in [`data/README.md`](data/README.md).
 
 ### Supported Benchmarks
 
